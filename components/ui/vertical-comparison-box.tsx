@@ -43,7 +43,7 @@ interface CustomTooltipProps {
 }
 
 interface RatioEntry {
-  year: string;
+  year: number;
   companyA: number | null;
   companyB: number | null;
   companyAName: string;
@@ -60,22 +60,21 @@ export function VerticalComparisonBox({
   const [isLoading, setIsLoading] = useState(false);
   const [barCategoryGap, setBarCategoryGap] = useState(10);
 
-  console.log(ratioValues);
-
   // Use the first entry to get company names, or provide defaults
   const companyAName =
     ratioValues.length > 0 ? ratioValues[0].companyAName : '';
   const companyBName =
     ratioValues.length > 0 ? ratioValues[0].companyBName : '';
 
-  console.log(ratioValues);
+  // Sort array by year
+  ratioValues.sort((a, b) => a.year - b.year);
 
   // Function to update the barCategoryGap based on window width
   const updateBarCategoryGap = () => {
     const windowWidth = window.innerWidth;
 
     if (windowWidth > 1800) {
-      setBarCategoryGap(60);
+      setBarCategoryGap(80);
     } else if (windowWidth > 1200) {
       setBarCategoryGap(40);
     } else if (windowWidth > 768) {
@@ -100,9 +99,6 @@ export function VerticalComparisonBox({
     isCompanyA: boolean
   ) => {
     if (a === null || b === null) return 'white';
-    console.log(ratioValues);
-    console.log(a);
-    console.log(b);
     if (a > b) {
       return isCompanyA ? 'url(#greenGradient)' : 'white';
     } else if (a < b) {

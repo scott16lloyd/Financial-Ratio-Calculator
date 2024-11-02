@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { VerticalComparisonBox } from '@/components/ui/vertical-comparison-box';
 import HorizontalComparisonBox from '@/components/ui/horizontal-comparison-box';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface SelectedStock {
   symbol: string;
@@ -46,17 +47,24 @@ export default function ComparePage() {
   const getComparisonData = (
     ratioName: keyof RatiosData
   ): {
-    year: string;
+    year: number;
     companyA: number | null;
     companyB: number | null;
     companyAName: string;
     companyBName: string;
   }[] => {
     const years = new Set([
-      ...(firstStockRatios?.map((r) => r.calendarYear) || []),
-      ...(secondStockRatios?.map((r) => r.calendarYear) || []),
+      ...(firstStockRatios?.map((r) => Number(r.calendarYear)) || []),
+      ...(secondStockRatios?.map((r) => Number(r.calendarYear)) || []),
     ]);
 
+    // Sort years in descending order
+    const sortedYears = Array.from(years).sort((a, b) => b - a);
+
+    // Latest year and previous year
+    const yearsToShow = sortedYears.slice(0, 2);
+
+    // Parse ratio value into a number or null
     const parseRatioValue = (
       value: string | number | undefined | null
     ): number | null => {
@@ -65,36 +73,27 @@ export default function ComparePage() {
       return isNaN(numValue) ? null : numValue;
     };
 
-    return Array.from(years).map((year) => ({
-      year,
-      companyA: parseRatioValue(
-        firstStockRatios?.find((r) => r.calendarYear === year)?.[ratioName]
-      ),
-      companyB: parseRatioValue(
-        secondStockRatios?.find((r) => r.calendarYear === year)?.[ratioName]
-      ),
-      companyAName: selectedFirstStock?.name || '',
-      companyBName: selectedSecondStock?.name || '',
-    }));
+    return yearsToShow.map((year) => {
+      // Get the ratios for the specified year
+      const firstStockRatio = firstStockRatios?.find(
+        (r) => Number(r.calendarYear) === year
+      );
+      const secondStockRatio = secondStockRatios?.find(
+        (r) => Number(r.calendarYear) === year
+      );
+      return {
+        year,
+        companyA: parseRatioValue(firstStockRatio?.[ratioName]),
+        companyB: parseRatioValue(secondStockRatio?.[ratioName]),
+        companyAName: selectedFirstStock?.name || '',
+        companyBName: selectedSecondStock?.name || '',
+      };
+    });
   };
 
-  // Temporary data for horizontal comparison box
-  const comparisonData = [
-    {
-      company: 'APPL',
-      prevValue: 1.32,
-      currValue: 1.62,
-      prevYear: '2022',
-      currYear: '2023',
-    },
-    {
-      company: 'QCOM',
-      prevValue: 1.32,
-      currValue: 1.62,
-      prevYear: '2022',
-      currYear: '2023',
-    },
-  ];
+  console.log('First stock ratios: ', firstStockRatios);
+  let g = getComparisonData('returnOnAssets');
+  console.log('Comparison data: ', g);
 
   return (
     <main className="w-full h-full flex flex-col justify-start items-center gap-4 pb-4">
@@ -113,11 +112,8 @@ export default function ComparePage() {
       </div>
       {selectedFirstStock ||
       (selectedSecondStock && (firstStockRatios || secondStockRatios)) ? (
-        <div className="w-full h-fit flex flex-col items-center">
-          <Tabs
-            defaultValue="roa"
-            className="w-11/12 md:w-7/12 lg:w-6/12 xl:w-4/12 gap-2"
-          >
+        <div className="w-11/12 md:w-7/12 lg:w-full lg:px-8 xl:w-8/12 xl:px-2 h-fit flex flex-col items-center">
+          <Tabs defaultValue="roa" className="w-full gap-2">
             <TabsList className="w-full">
               <TabsTrigger value="roa" className="w-full">
                 ROA
@@ -156,7 +152,12 @@ export default function ComparePage() {
           </Tabs>
         </div>
       ) : null}
-      <HorizontalComparisonBox ratioName="CR" items={comparisonData} />
+      <div className="w-11/12 md:w-7/12 lg:w-full lg:px-8 xl:w-8/12 xl:px-2">
+        <HorizontalComparisonBox
+          ratioName="CR"
+          items={getComparisonData('currentRatio')}
+        />
+      </div>
     </main>
   );
 }

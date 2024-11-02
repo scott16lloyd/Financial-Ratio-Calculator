@@ -24,11 +24,11 @@ import {
 } from '@/lib/ratioDescriptions';
 
 interface ComparisonItem {
-  company: string;
-  currValue: number;
-  prevValue: number;
-  prevYear: string;
-  currYear: string;
+  year: number;
+  companyA: number | null;
+  companyB: number | null;
+  companyAName: string;
+  companyBName: string;
 }
 
 interface HorizontalComparisonBoxProps {
@@ -68,8 +68,6 @@ export default function HorizontalComparisonBox({
 
   // Select color class based on value and its ratio
   const getColorClass = (value: number, ratioName: string): string => {
-    console.log(value, ratioName);
-    console.log(colorRules[ratioName](value));
     return colorRules[ratioName](value);
   };
 
@@ -85,9 +83,38 @@ export default function HorizontalComparisonBox({
     PBR: PBRatioDescription,
   };
 
+  console.log(items);
+
+  // Transform data array into more easily indexible array for horizontal comparison box
+  const transformItems = (items: ComparisonItem[]) => {
+    const companyData =
+      items.length > 0
+        ? [
+            {
+              companyName: items[0].companyAName,
+              data: items.map((item) => ({
+                year: item.year,
+                value: item.companyA,
+              })),
+            },
+            {
+              companyName: items[0].companyBName,
+              data: items.map((item) => ({
+                year: item.year,
+                value: item.companyB,
+              })),
+            },
+          ]
+        : [];
+    return companyData;
+  };
+
+  const transformedItems = transformItems(items);
+  console.log(transformedItems);
+
   return (
-    <div className="bg-secondary flex flex-col items-center py-2 px-2 md:px-4 lg:px-6 xl:px-2 2xl:px-3 rounded-lg w-11/12 md:w-7/12 lg:w-6/12 xl:w-4/12 outline outline-zinc-700 outline-1 shadow-md shadow-zinc-900 scrollbar-hide">
-      <h2 className="w-full gap-2 flex flex-row items-center text-lg md:text-3xl lg:text-4xl xl:text-4xl mb-4 self-start">
+    <div className="bg-secondary flex flex-col items-center p-2 rounded-lg w-full outline outline-zinc-700 outline-1 shadow-md shadow-zinc-900 scrollbar-hide">
+      <h2 className="w-full gap-2 flex flex-row items-center text-lg sm md:text-3xl lg:text-4xl xl:text-4xl mb-4 self-start">
         {ratioName}
         <Drawer>
           <DrawerTrigger>
@@ -128,44 +155,64 @@ export default function HorizontalComparisonBox({
           </DrawerContent>
         </Drawer>
       </h2>
-      {items && items.length > 0 ? (
-        items.map((item, index) => (
-          <div
-            key={item.company}
-            className={
-              index !== 0
-                ? 'mt-4 pt-4 border-t border-zinc-700 w-10/12'
-                : 'w-10/12'
-            }
-          >
-            <div className="text-lg font-medium">{item.company}</div>
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex flex-col items-center">
-                <span className="text-sm text-gray-400">{item.prevYear}</span>
-                <span
-                  className={`text-2xl font-bold ${getColorClass(
-                    item.currValue,
-                    ratioName
-                  )}`}
-                >
-                  {item.currValue.toFixed(2)}
-                </span>
+      {transformedItems && transformedItems.length > 0 ? (
+        transformedItems
+          .filter((company) => company.companyName)
+          .map((company, index) => (
+            <div
+              key={company.companyName}
+              className={
+                index !== 0
+                  ? 'mt-4 pt-4 border-t border-zinc-700 w-full px-4'
+                  : 'w-full px-4'
+              }
+            >
+              {/* Display the company name */}
+              <div className="text-lg md:text-2xl lg:text-3xl font-medium">
+                {company.companyName}
               </div>
-              <ArrowRight className="text-gray-400 mx-4" />
-              <div className="flex flex-col items-center">
-                <span className="text-sm text-gray-400">{item.currYear}</span>
-                <span
-                  className={`text-2xl font-bold ${getColorClass(
-                    item.currValue,
-                    ratioName
-                  )}`}
-                >
-                  {item.prevValue.toFixed(2)}
-                </span>
+
+              {/* Display the years and values for the current and previous year */}
+              <div className="flex items-center justify-between mt-2 lg:px-16 lg:py-2">
+                {/* Previous year's data */}
+                <div className="flex flex-col items-center">
+                  <span className="text-sm md:text-lg lg:text-xl xl:text-2xl text-gray-400">
+                    {company.data[1]?.year}
+                  </span>
+                  <span
+                    className={`text-3xl md:text-4xl xl:text-5xl font-bold ${getColorClass(
+                      company.data[1]?.value || 0,
+                      ratioName
+                    )}`}
+                  >
+                    {company.data[1]?.value !== null
+                      ? company.data[1].value.toFixed(2)
+                      : 'N/A'}
+                  </span>
+                </div>
+
+                {/* Arrow icon */}
+                <ArrowRight className="text-gray-400 mx-4 lg:w-8 lg:h-8 xl:w-10 xl:h-10" />
+
+                {/* Current year's data */}
+                <div className="flex flex-col items-center">
+                  <span className="text-sm md:text-lg lg:text-xl xl:text-2xl text-gray-400">
+                    {company.data[0]?.year}
+                  </span>
+                  <span
+                    className={`text-3xl md:text-4xl xl:text-5xl font-bold ${getColorClass(
+                      company.data[0]?.value || 0,
+                      ratioName
+                    )}`}
+                  >
+                    {company.data[0]?.value !== null
+                      ? company.data[0].value.toFixed(2)
+                      : 'N/A'}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))
+          ))
       ) : (
         <p className="text-gray-400">No comparison data available.</p>
       )}

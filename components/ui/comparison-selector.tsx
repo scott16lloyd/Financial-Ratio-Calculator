@@ -168,18 +168,23 @@ export function ComparisonSelector({
         <PopoverTrigger asChild>
           <div className="flex flex-col w-full gap-1">
             <Label>Select stock {index}</Label>
-            <Input
-              type="text"
-              value={searchString}
-              placeholder="Search with a ticker symbol e.g. APPL"
-              className="min-h-11 h-full xs:text-xs md:text-lg"
-              onChange={handleSearchChange}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                }
-              }}
-            />
+            <div className="flex flex-row gap-2 h-full">
+              <Input
+                type="text"
+                value={searchString}
+                placeholder="Search with a ticker symbol e.g. APPL"
+                className="min-h-11 h-full xs:text-xs md:text-lg"
+                onChange={handleSearchChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
+              />
+              <Button onClick={() => null} className="min-h-11">
+                <Search />
+              </Button>
+            </div>
           </div>
         </PopoverTrigger>
         <PopoverContent
